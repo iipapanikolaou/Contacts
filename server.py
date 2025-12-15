@@ -1,13 +1,18 @@
 from flask import Flask,request,jsonify
-import json
 
 app = Flask(__name__)
 
 contacts = [
-    {'id':'1','name':'john','number':'6985699842'},
-    {'id':'2','name':'adam','number':'6985239842'},
-    {'id':'3','name':'peter','number':'6985645842'},
+    {'id':1,'name':'john','number':'6985699842'},
+    {'id':2,'name':'adam','number':'6985239842'},
+    {'id':3,'name':'peter','number':'6985645842'},
 ]
+
+#GET    - /contacts - list contacts
+#GET    - /contacts/<id> - list specific contact
+#POST   - /contacts - add contact
+#PUT    - /contacts/<id> - edit contact
+#DELETE - /contacts - delete contact
 
 
 @app.route('/')
@@ -16,58 +21,75 @@ def homepage():
 
 @app.get('/contacts')
 def list_contacts():
-    return json.dumps(contacts)
+    return jsonify(contacts)
 
 @app.get('/contacts/<id>')
 def list_contact(id):
+
+    if not id.isdigit():
+        return ('No matching record for requested id',400)
+    
     for contact in contacts:
-        if contact['id'] == id:
+        if contact['id'] == int(id):
             return jsonify(contact)
         
-    return ('No matching record for requested id',404)
+    return ('No matching record for requested id',400)
 
 @app.post('/contacts')
 def add_contact():
-    contactId = request.json['id']
-    contactName = request.json['name']
-    contactNumber = request.json['number']
+    payload = request.get_json(silent=True)
 
-    if contactId and contactName and contactNumber:
+    if not payload:
+        return ('Error while parsing request. Check formatting again.',400)
+    
+    contactName = payload.get('name')
+    contactNumber = payload.get('number')
+
+    if contactName and contactNumber:
         newContact = {
-            'id':contactId,
-            'name':contactName,
-            'number':contactNumber
+            'id': max(int(c['id']) for c in contacts) + 1 if contacts else 1,
+            'name': contactName,
+            'number': contactNumber
         }
 
         contacts.append(newContact)
 
-
         return newContact
     
-    return ('Something went wrong while adding your contact',400)
+    return ('One or more fields are ommited.',400)
 
 @app.put('/contacts/<id>')
 def edit_contact(id):
-    contactName = request.json['name']
-    contactNumber = request.json['number']
+
+    if not id.isdigit():
+        return ('No matching record for requested id',400)
+
+    payload = request.get_json(silent=True)
+
+    if not payload:
+        return ('Error while parsing request. Check formatting again.',400)
+
+    contactName = payload.get('name')
+    contactNumber = payload.get('number')
 
     for contact in contacts:
-        if contact['id'] == id:
+        if contact['id'] == int(id):
             contact['name'] = contactName if contactName else contact['name']
             contact['number'] = contactNumber if contactNumber else contact['number']
+            
             return jsonify(contact)
         
-    return ('Could not find requested id',400)
+    return ('No matching record for requested id',400)
 
 @app.delete('/contacts/<id>')
 def delete_contact(id):
 
     for contact in contacts:
-        if contact['id'] == id:
+        if contact['id'] == int(id):
             contacts.remove(contact)
-            return 'Removed successfully'
+            return (f'Contact {id} removed successfully from the catalog')
         
-    return ('Could not find requested id',400)
+    return ('No matching record for requested id',400)
 
 app.run(debug=True)
 

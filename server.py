@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify,abort
 
 app = Flask(__name__)
 
@@ -42,23 +42,19 @@ def createResponse(
 
 @app.errorhandler(404)
 def resource_not_found(e):
-    return createResponse(success=False,errMsg='SourceNotFound',errCode = 404),405
+    return createResponse(success=False,errMsg='SourceNotFound',errCode = 404),404
 
 @app.errorhandler(405)
-def resource_not_found(e):
+def invalid_request(e):
     return createResponse(success=False,errMsg='InvalidRequest',errCode = 405),405
 
 @app.errorhandler(400)
-def resource_not_found(e):
+def bad_request(e):
     return createResponse(success=False,errMsg='BadRequest',errCode = 400),400
 
 @app.errorhandler(500)
-def resource_not_found(e):
-    return createResponse(success=False,errMsg='InvalidRequest',errCode = 500),500
-
-@app.route("/")
-def homepage():
-    return "<h1>Hello there!</h1>"
+def internal_server_error(e):
+    return createResponse(success=False,errMsg='InternalServerError',errCode = 500),500
 
 
 @app.get("/contacts")
@@ -73,10 +69,7 @@ def list_contact(id):
         if contact["id"] == id:
             return (createResponse(data=contact), 200)
 
-    return (
-        createResponse(success=False, errMsg="SourceNotFound", errCode=404),
-        404,
-    )
+    abort(404)
 
 
 @app.post("/contacts")
@@ -84,10 +77,7 @@ def add_contact():
     payload = request.get_json(silent=True)
 
     if not payload:
-        return (
-            createResponse(success=False, errMsg="InvalidPayload", errCode=400),
-            400,
-        )
+        abort(400)
 
     contactName = payload.get("name")
     contactNumber = payload.get("number")
@@ -103,10 +93,7 @@ def add_contact():
 
         return createResponse(data=newContact), 201
 
-    return (
-        createResponse(success=False, errMsg="InvalidPayload", errCode=400),
-        400,
-    )
+    abort(400)
 
 
 @app.put("/contacts/<int:id>")
@@ -115,10 +102,7 @@ def edit_contact(id):
     payload = request.get_json(silent=True)
 
     if not payload:
-        return (
-            createResponse(success=False, errMsg="InvalidPayload", errCode=400),
-            400,
-        )
+        abort(400)
 
     contactName = payload.get("name")
     contactNumber = payload.get("number")
@@ -130,10 +114,7 @@ def edit_contact(id):
 
             return (createResponse(data=contact), 200)
 
-    return (
-        createResponse(success=False, errMsg="SourceNotFound", errCode=404),
-        404,
-    )
+    abort(404)
 
 
 @app.delete("/contacts/<int:id>")
@@ -144,10 +125,7 @@ def delete_contact(id):
             contacts.remove(contact)
             return ("", 204)
 
-    return (
-        createResponse(success=False, errMsg="SourceNotFound", errCode=404),
-        404,
-    )
+    abort(404)
 
 
 app.run(debug=True)

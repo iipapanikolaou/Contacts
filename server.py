@@ -21,6 +21,12 @@ def createResponse(
     errMsg: str | None = None,
     errCode: int | None = None,
 ):
+    
+    #This function returns a JSON response based on given arguments.
+    #Usage examples:
+    #Success: createResponse(data = data)
+    #Failure: createResponse(success=False,errMsg='<short status message>',errCode = '<http status code>')
+    
 
     if success:
         response = {"success": True, "data": data, "error": None}
@@ -33,6 +39,22 @@ def createResponse(
     
     return jsonify(response)
 
+
+@app.errorhandler(404)
+def resource_not_found(e):
+    return createResponse(success=False,errMsg='SourceNotFound',errCode = 404),405
+
+@app.errorhandler(405)
+def resource_not_found(e):
+    return createResponse(success=False,errMsg='InvalidRequest',errCode = 405),405
+
+@app.errorhandler(400)
+def resource_not_found(e):
+    return createResponse(success=False,errMsg='BadRequest',errCode = 400),400
+
+@app.errorhandler(500)
+def resource_not_found(e):
+    return createResponse(success=False,errMsg='InvalidRequest',errCode = 500),500
 
 @app.route("/")
 def homepage():
@@ -79,7 +101,7 @@ def add_contact():
 
         contacts.append(newContact)
 
-        return (createResponse(data=newContact), 201)
+        return createResponse(data=newContact), 201
 
     return (
         createResponse(success=False, errMsg="InvalidPayload", errCode=400),
@@ -87,7 +109,7 @@ def add_contact():
     )
 
 
-@app.put("/contacts/<id>")
+@app.put("/contacts/<int:id>")
 def edit_contact(id):
 
     payload = request.get_json(silent=True)
@@ -102,7 +124,7 @@ def edit_contact(id):
     contactNumber = payload.get("number")
 
     for contact in contacts:
-        if str(contact["id"]) == id:
+        if contact["id"] == id:
             contact["name"] = contactName if contactName else contact["name"]
             contact["number"] = contactNumber if contactNumber else contact["number"]
 
@@ -114,11 +136,11 @@ def edit_contact(id):
     )
 
 
-@app.delete("/contacts/<id>")
+@app.delete("/contacts/<int:id>")
 def delete_contact(id):
 
     for contact in contacts:
-        if str(contact["id"]) == id:
+        if contact["id"] == id:
             contacts.remove(contact)
             return ("", 204)
 

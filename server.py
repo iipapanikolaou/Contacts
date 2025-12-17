@@ -14,60 +14,128 @@ contacts = [
 # PUT    - /contacts/<id> - edit contact
 # DELETE - /contacts/<id> - delete contact
 
-
-def createResponse(
-    data: list | dict | None = None,
-    success: bool = True,
-    errMsg: str | None = None,
-    errCode: int | None = None,
+def errorResponse(
+    errMsg: str = None,
+    errCode: int = None,
 ):
     
-    #This function returns a JSON response based on given arguments.
-    #Usage examples:
-    #Success: createResponse(data = data)
-    #Failure: createResponse(success=False,errMsg='<short status message>',errCode = '<http status code>')
-    
+    response = {
+        "success": False,
+        "data": None,
+        "error": {"message": errMsg, "code": errCode},
+    }
 
-    if success:
-        response = {"success": True, "data": data, "error": None}
-    else:
-        response = {
-            "success": False,
-            "data": None,
-            "error": {"message": errMsg, "code": errCode},
-        }
-    
     return response
+
+def successResponse(
+    data: list | dict,
+    page: int = 1,
+    limit: int = 5,
+    totalEntries: int = 0,
+):
+    
+    if type(data) == list:
+        response = {
+            "success": True,
+            "data": {
+                "items": data,
+                "page": page,
+                "limit": limit,
+                "total": totalEntries
+            },
+            "error": None,
+        }
+
+    response = {"success": True, "data": data, "error": None}
+
+    return response
+
+# def createResponse(
+#     data: list | dict | None = None,
+#     success: bool = True,
+#     errMsg: str | None = None,
+#     errCode: int | None = None,
+# ):
+    
+#     #This function returns a JSON response based on given arguments.
+#     #Usage examples:
+#     #Success: createResponse(data = data)
+#     #Failure: createResponse(success=False,errMsg='<short status message>',errCode = '<http status code>')
+    
+#     if not success:
+#         response = {
+#             "success": False,
+#             "data": None,
+#             "error": {"message": errMsg, "code": errCode},
+#         }
+#         return response
+    
+#     response = {"success": True, "data": {"items":data,"page":1,"limit":5,"total":total items}, "error": None}
+
+#     if success:
+#         response = {"success": True, "data": data, "error": None}
+#     else:
+#         response = {
+#             "success": False,
+#             "data": None,
+#             "error": {"message": errMsg, "code": errCode},
+#         }
+    
+#     return response
 
 
 @app.errorhandler(404)
 def resource_not_found(e):
-    return jsonify(createResponse(success=False,errMsg='SourceNotFound',errCode = 404)),404
+
+    response = errorResponse('SourceNotFound',404)
+
+    return jsonify(response), 404
 
 @app.errorhandler(405)
 def invalid_request(e):
-    return jsonify(createResponse(success=False,errMsg='InvalidRequest',errCode = 405)),405
+
+    response = errorResponse('InvalidRequest',405)
+
+    return jsonify(response), 405
 
 @app.errorhandler(400)
 def bad_request(e):
-    return jsonify(createResponse(success=False,errMsg='BadRequest',errCode = 400)),400
+
+    response = errorResponse('BadRequest',400)
+
+    return jsonify(response), 400
 
 @app.errorhandler(500)
 def internal_server_error(e):
-    return jsonify(createResponse(success=False,errMsg='InternalServerError',errCode = 500)),500
+
+    response = errorResponse('InternalServerError',500)
+
+    return jsonify(response), 500
 
 @app.errorhandler(Exception)
 def catch_unhandled_errors(e):
-    return jsonify(createResponse(success=False,errMsg='InternalServerError',errCode = 500)),500
-    
 
-@app.get("/contacts")
-def list_contacts():
-    return jsonify(createResponse(data=contacts)), 200
+    response = errorResponse('InternalServerError',500)
+
+    return jsonify(response), 500
+
+@app.get("/contacts", defaults={'page':1,'limit':5})
+def contacts(page,limit):
+
+    totalContacts = contacts.count()
+
+    response = successResponse(data=contacts,
+                               page=page,
+                               limit=limit,
+                               totalEntries=totalContacts)
+
+    return jsonify(response), 200
 
 
 @app.get("/contacts/<int:id>")
 def list_contact(id):
+ 
+    response = {"success": True, "data": {"items":data,"page":1,"limit":5,"total":total items}, "error": None}
 
     for contact in contacts:
         if contact["id"] == id:

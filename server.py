@@ -56,6 +56,10 @@ def bad_request(e):
 def internal_server_error(e):
     return jsonify(createResponse(success=False,errMsg='InternalServerError',errCode = 500)),500
 
+@app.errorhandler(Exception)
+def catch_unhandled_errors():
+    return jsonify(createResponse(success=False,errMsg='InternalServerError',errCode = 500)),500
+    
 
 @app.get("/contacts")
 def list_contacts():

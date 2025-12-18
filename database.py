@@ -20,11 +20,11 @@ def init_db():
     cursor.close()
     conn.close()
 
-    new_conn = sqlite3.connect("contacts.db")
+    new_conn = sqlite3.connect(DATABASE_FILENAME)
     new_cursor = new_conn.cursor()
     rows = new_cursor.execute("SELECT name FROM sqlite_master")
 
-    return rows.fetchone() is None
+    return not rows.fetchone() is None
 
 
 def get_contact_by_id(contact_id):
@@ -56,14 +56,13 @@ def update_contact(contact_id, name, number):
     cursor = conn.cursor()
 
     cursor.execute('UPDATE contacts SET name = ?, number = ? WHERE id = ?',(name, number, contact_id,))
-    conn.commit()
-
-    if cursor.rowcount >= 1:
-        rows = cursor.execute('SELECT id,name,number FROM contacts WHERE id = ?',(cursor.lastrowid,))
-        return rows.fetchone()
+    
+    if cursor.rowcount == 1:
+        cursor.commit()
+        return cursor.execute('SELECT id,name,number FROM contacts WHERE id = ?', contact_id).fetchone()
     
     return None
-
+    
 def delete_contact(contact_id):
 
     conn = sqlite3.connect(DATABASE_FILENAME)

@@ -191,15 +191,13 @@ def edit_contact(id):
 
     return jsonify(response), 201
 
-@app.delete("/contacts/<int:id>")
+@app.delete("/contacts/id")
 def delete_contact(id):
 
-    for contact in contacts:
-        if contact["id"] == id:
-            contacts.remove(contact)
-            return ("", 204)
-
-    abort(404)
-
+    if not delete_contact(id):
+        abort(404)
+    
+    return ("", 204)
+    
 
 app.run(debug=True)

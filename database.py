@@ -63,3 +63,16 @@ def update_contact(contact_id, name, number):
         return rows.fetchone()
     
     return None
+
+def delete_contact(contact_id):
+
+    conn = sqlite3.connect(DATABASE_FILENAME)
+    cursor = conn.cursor()
+
+    cursor.execute('DELETE FROM contacts WHERE id = ?',(contact_id,))
+    conn.commit()
+
+    if cursor.rowcount == 1:
+        return True
+    
+    return False

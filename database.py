@@ -32,6 +32,16 @@ def get_contact_by_id(contact_id):
     conn = sqlite3.connect(DATABASE_FILENAME)
     cursor = conn.cursor()
 
-    rows = cursor.execute('SELECT id,name,number FROM contacts WHERE id = ?',contact_id)
+    rows = cursor.execute('SELECT id,name,number FROM contacts WHERE id = ?', contact_id)
     
     return rows.fetchone()
+
+def create_contact(name, number):
+
+    conn = sqlite3.connect(DATABASE_FILENAME)
+    cursor = conn.cursor()
+
+    cursor.execute('INSERT INTO contacts (name,number) VALUES(?,?)',(name,number,))
+    conn.commit()
+
+    return cursor.lastrowid

@@ -5,7 +5,7 @@
 # DELETE - /contacts/<id> - delete contact
 
 from flask import Flask, request, jsonify, abort
-from database import init_db,get_contact_by_id
+from database import init_db,get_contact_by_id,create_contact
 
 app = Flask(__name__)
 if not init_db():
@@ -148,18 +148,21 @@ def add_contact():
     contactNumber = payload.get("number")
 
     if contactName and contactNumber:
+        
+        newContactID = create_contact(contactName,contactNumber)
+
+        if not newContactID:
+            abort(500)
+        
         newContact = {
-            "id": max(int(c["id"]) for c in contacts) + 1 if contacts else 1,
-            "name": contactName,
-            "number": contactNumber,
+            'id': int(newContactID),
+            'name': contactName,
+            'number':contactNumber
         }
 
-        contacts.append(newContact)
         response = success_response(newContact)
 
         return jsonify(response), 201
-
-    abort(400)
 
 
 @app.put("/contacts/<int:id>")

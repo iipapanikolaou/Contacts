@@ -18,3 +18,11 @@ def init_db():
     conn.commit()
     cursor.close()
     conn.close()
+
+    new_conn = sqlite3.connect("contacts.db")
+
+    new_cursor = new_conn.cursor()
+
+    rows = new_cursor.execute("SELECT name FROM sqlite_master")
+
+    return rows.fetchone() is None

@@ -8,7 +8,8 @@ from flask import Flask, request, jsonify, abort
 from database import init_db
 
 app = Flask(__name__)
-init_db()
+if not init_db():
+    abort(500)
 
 contacts = [
     {"id": 1, "name": "john", "number": "6985699842"},

@@ -6,36 +6,34 @@ def init_db():
     conn = sqlite3.connect(DATABASE_FILENAME)
     cursor = conn.cursor()
 
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS contacts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            number TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
-        );
-    """)
-    conn.commit()
-
+    try:
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS contacts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                number TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+            );
+        """)
+        conn.commit()
+    except sqlite3.Error:
+        cursor.close()
+        conn.close()
+        return False
+    
     cursor.close()
     conn.close()
-
-    new_conn = sqlite3.connect(DATABASE_FILENAME)
-    new_cursor = new_conn.cursor()
-    new_cursor.execute("SELECT name FROM sqlite_master")
-
-    return not cursor.fetchone() is None
-
+    return True
 
 def get_contacts(page,limit):
 
     conn = sqlite3.connect(DATABASE_FILENAME)
     cursor = conn.cursor()
 
-    start_id = (page - 1)* limit + 1
-    end_id = start_id + limit - 1 
+    offset_rows = (page - 1) * limit
 
-    cursor.execute('SELECT id,name,number FROM contacts WHERE id >= ? AND id <= ? ',(start_id,end_id,))
+    cursor.execute('SELECT id, name, number FROM contacts ORDER BY id ASC LIMIT ? OFFSET ?',(limit,offset_rows,))
     rows = cursor.fetchall()
 
     cursor.close()
@@ -60,7 +58,8 @@ def get_contact_by_id(contact_id):
     conn = sqlite3.connect(DATABASE_FILENAME)
     cursor = conn.cursor()
 
-    row = cursor.execute('SELECT id,name,number FROM contacts WHERE id = ?', contact_id).fetchone()
+    cursor.execute('SELECT id,name,number FROM contacts WHERE id = ?', (contact_id,))
+    row = cursor.fetchone()
 
     cursor.close()
     conn.close()
@@ -72,16 +71,19 @@ def create_contact(name, number):
     conn = sqlite3.connect(DATABASE_FILENAME)
     cursor = conn.cursor()
 
-    cursor.execute('INSERT INTO contacts (name,number) VALUES(?,?)',(name,number,))
-    conn.commit()
+    try:
+        cursor.execute('INSERT INTO contacts (name,number) VALUES(?,?)',(name,number,))
+        conn.commit()
+    except sqlite3.Error:
+        cursor.close()
+        conn.close()
+        return None
 
     newRowId = cursor.lastrowid
 
-    if cursor.rowcount == 1:
-        cursor.execute('SELECT id,name,number FROM contacts WHERE id = ?', (newRowId,))
-        return cursor.fetchone()
-
-    return None
+    cursor.close()
+    conn.close()
+    return get_contact_by_id(newRowId)
 
 def update_contact(contact_id, name, number):
 
@@ -89,7 +91,7 @@ def update_contact(contact_id, name, number):
     cursor = conn.cursor()
 
     try:
-        cursor.execute('UPDATE contacts SET name = ?, number = ? WHERE id = ?',(name, number, contact_id,))
+        cursor.execute('UPDATE contacts SET name = ?, number = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',(name, number, contact_id,))
         conn.commit()
     except sqlite3.Error:
         cursor.close()
@@ -101,7 +103,7 @@ def update_contact(contact_id, name, number):
     conn.close()
     return row
     
-def delete_contact(contact_id):
+def remove_contact(contact_id):
 
     conn = sqlite3.connect(DATABASE_FILENAME)
     cursor = conn.cursor()

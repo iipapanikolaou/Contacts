@@ -5,7 +5,7 @@
 # DELETE - /contacts/<id> - delete contact
 
 from flask import Flask, request, jsonify, abort
-from database import init_db, get_contact_by_id, create_contact, update_contact, delete_contact, get_contacts,count_contacts
+from database import init_db, get_contact_by_id, create_contact, update_contact, remove_contact, get_contacts,count_contacts
 
 app = Flask(__name__)
 
@@ -79,7 +79,7 @@ def internal_server_error(e):
 @app.errorhandler(Exception)
 def catch_unhandled_errors(e):
 
-    response = errorResponse(Exception + ' ' + str(e),500)
+    response = errorResponse(str(e),500)
 
     return jsonify(response), 500
 
@@ -110,7 +110,7 @@ def list_contacts():
     return jsonify(response), 200
 
 
-@app.get("/contacts/<id>")
+@app.get("/contacts/<int:id>")
 def list_contact(id):
 
     contactRaw = get_contact_by_id(id)
@@ -159,7 +159,7 @@ def add_contact():
     abort(400)
 
 
-@app.put("/contacts/<id>")
+@app.put("/contacts/<int:id>")
 def edit_contact(id):
 
     payload = request.get_json(silent=True)
@@ -191,7 +191,7 @@ def edit_contact(id):
 
     return jsonify(response), 201
 
-@app.delete("/contacts/id")
+@app.delete("/contacts/<int:id>")
 def delete_contact(id):
 
     contact = get_contact_by_id(id)
@@ -199,7 +199,7 @@ def delete_contact(id):
     if not contact:
         abort(404)
 
-    if not delete_contact(id):
+    if not remove_contact(id):
         abort(500)
     
     return ("", 204)

@@ -20,18 +20,15 @@ def init_db():
 
 def get_contacts(page,limit):
 
-    conn = sqlite3.connect(DATABASE_FILENAME)
-    cursor = conn.cursor()
-
     offset_rows = (page - 1) * limit
 
-    cursor.execute('SELECT id, name, number FROM contacts ORDER BY id ASC LIMIT ? OFFSET ?',(limit,offset_rows,))
-    rows = cursor.fetchall()
+    with sqlite3.connect(DATABASE_FILENAME) as conn:
 
-    cursor.close()
-    conn.close()
+        cursor = conn.cursor()
+        cursor.execute('SELECT id, name, number FROM contacts ORDER BY id ASC LIMIT ? OFFSET ?',(limit,offset_rows,))
+        rows = cursor.fetchall()
 
-    return rows
+        return map_rows_to_contacts(rows)
 
 def count_contacts():
 

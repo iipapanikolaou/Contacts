@@ -17,8 +17,6 @@ def init_db():
         """)
         conn.commit()
 
-    return True
-
 def get_contacts(page,limit):
 
     offset_rows = (page - 1) * limit

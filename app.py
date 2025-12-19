@@ -9,8 +9,7 @@ from database import init_db, get_contact_by_id, create_contact, update_contact,
 
 app = Flask(__name__)
 
-if not init_db():
-    abort(500)
+init_db()
 
 # contacts = [
 #     {"id": 1, "name": "john", "number": "6985699842"},
@@ -160,8 +159,8 @@ def edit_contact(id):
     if not contact:
         abort(404)
 
-    contactName = payload.get("name") if payload.get("name") else contact[1]
-    contactNumber = payload.get("number") if payload.get("number") else contact[2]
+    contactName = payload.get("name") if payload.get("name") else contact['name']
+    contactNumber = payload.get("number") if payload.get("number") else contact['number']
 
     if not update_contact(id,contactName,contactNumber):
         abort(500)

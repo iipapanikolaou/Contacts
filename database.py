@@ -22,9 +22,9 @@ def init_db():
 
     new_conn = sqlite3.connect(DATABASE_FILENAME)
     new_cursor = new_conn.cursor()
-    rows = new_cursor.execute("SELECT name FROM sqlite_master")
+    new_cursor.execute("SELECT name FROM sqlite_master")
 
-    return not rows.fetchone() is None
+    return not cursor.fetchone() is None
 
 
 def get_contacts(page,limit):
@@ -75,10 +75,12 @@ def create_contact(name, number):
     cursor.execute('INSERT INTO contacts (name,number) VALUES(?,?)',(name,number,))
     conn.commit()
 
-    if cursor.lastrowid:
-        rows = cursor.execute('SELECT id,name,number FROM contacts WHERE id = ?', (cursor.lastrowid,))
-        return rows.fetchone()
-    
+    newRowId = cursor.lastrowid
+
+    if cursor.rowcount == 1:
+        cursor.execute('SELECT id,name,number FROM contacts WHERE id = ?', (newRowId,))
+        return cursor.fetchone()
+
     return None
 
 def update_contact(contact_id, name, number):

@@ -5,7 +5,7 @@
 # DELETE - /contacts/<id> - delete contact
 
 from flask import Flask, request, jsonify, abort
-from database import init_db,get_contact_by_id,create_contact, update_contact,delete_contact,get_contacts,count_contacts
+from database import init_db, get_contact_by_id, create_contact, update_contact, delete_contact, get_contacts,count_contacts
 
 app = Flask(__name__)
 
@@ -76,12 +76,12 @@ def internal_server_error(e):
     return jsonify(response), 500
 
 
-# @app.errorhandler(Exception)
-# def catch_unhandled_errors(e):
+@app.errorhandler(Exception)
+def catch_unhandled_errors(e):
 
-#     response = errorResponse(str(e),500)
+    response = errorResponse(Exception + ' ' + str(e),500)
 
-#     return jsonify(response), 500
+    return jsonify(response), 500
 
 
 @app.get("/contacts")
@@ -99,15 +99,13 @@ def list_contacts():
     contactsRaw = get_contacts(page,limit)
     total = count_contacts()
 
-    # Checks if pages before the requested page were sufficient enough to show all available data.
-    # If they were, items key will display an empty list.
-    # If page = 1, the condition will always be True
     if len(contactsRaw) == 0:
 
         response = paginated_response([],page,limit,total)
         return jsonify(response), 200
     
     contacts = list({'id':x[0],'name':x[1],'number':x[2]} for x in contactsRaw)
+
     response = paginated_response(contacts,page,limit,total)
     return jsonify(response), 200
 
@@ -177,9 +175,8 @@ def edit_contact(id):
     contactName = payload.get("name") if payload.get("name") else contact[1]
     contactNumber = payload.get("number") if payload.get("number") else contact[2]
 
-    app.logger.debug(f'prin ton elegxo')
     contactRaw = update_contact(id,contactName,contactNumber)
-    app.logger.debug(f'update_contact::{contactRaw}')
+
 
     if not contactRaw:
         abort(500)

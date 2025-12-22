@@ -6,7 +6,7 @@
 
 from flask import Flask, request, jsonify, abort
 import database as db
-from validation import validate_data
+from validation import validate_data, ValidationError
 
 app = Flask(__name__)
 
@@ -76,6 +76,13 @@ def internal_server_error(e):
     return jsonify(response), 500
 
 
+@app.errorhandler(ValidationError)
+def handle_validation_error(e):
+
+    response = errorResponse(str(e), 400)
+
+    return jsonify(response), 400
+
 @app.errorhandler(Exception)
 def catch_unhandled_errors(e):
 
@@ -86,7 +93,6 @@ def catch_unhandled_errors(e):
 
 @app.get("/contacts")
 def list_contacts():
-    abort(400)
 
     try:
         page = int(request.args.get("page", 1))

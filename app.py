@@ -5,11 +5,12 @@
 # DELETE - /contacts/<id> - delete contact
 
 from flask import Flask, request, jsonify, abort
-from database import init_db, get_contact_by_id, create_contact, update_contact, remove_contact, get_contacts,count_contacts
+import database as db
+from validation import validate_data
 
 app = Flask(__name__)
 
-init_db()
+db.init_db()
 
 # contacts = [
 #     {"id": 1, "name": "john", "number": "6985699842"},
@@ -46,7 +47,7 @@ def paginated_response(items, page:int, limit:int, total:int):
 @app.errorhandler(404)
 def resource_not_found(e):
 
-    response = errorResponse("SourceNotFound", 404)
+    response = errorResponse('SourceNotFound', 404)
 
     return jsonify(response), 404
 
@@ -75,16 +76,17 @@ def internal_server_error(e):
     return jsonify(response), 500
 
 
-# @app.errorhandler(Exception)
-# def catch_unhandled_errors(e):
+@app.errorhandler(Exception)
+def catch_unhandled_errors(e):
 
-#     response = errorResponse(str(e),500)
+    response = errorResponse(str(e),500)
 
-#     return jsonify(response), 500
+    return jsonify(response), 500
 
 
 @app.get("/contacts")
 def list_contacts():
+    abort(400)
 
     try:
         page = int(request.args.get("page", 1))
@@ -95,8 +97,8 @@ def list_contacts():
     if page <= 0 or limit <= 0:
         abort(400)
 
-    contacts = get_contacts(page,limit)
-    total = count_contacts()
+    contacts = db.get_contacts(page,limit)
+    total = db.count_contacts()
 
     if len(contacts) == 0:
 
@@ -110,7 +112,7 @@ def list_contacts():
 @app.get("/contacts/<int:id>")
 def list_contact(id):
 
-    contact = get_contact_by_id(id)
+    contact = db.get_contact_by_id(id)
 
     if not contact:
         abort(404)
@@ -124,48 +126,39 @@ def list_contact(id):
 def add_contact():
     payload = request.get_json(silent=True)
 
-    if not payload:
-        abort(400)
+    validated_data = validate_data(payload, 'POST')
 
-    contactName = payload.get("name")
-    contactNumber = payload.get("number")
+    createdContactId = db.create_contact(validated_data['name'], validated_data['number'])
 
-    if contactName and contactNumber:
+    if not createdContactId:
+        abort(500)
 
-        createdContactId = create_contact(contactName,contactNumber)
+    createdContact = db.get_contact_by_id(createdContactId)
 
-        if not createdContactId:
-            abort(500)
+    response = success_response(createdContact)
 
-        createdContact = get_contact_by_id(createdContactId)
-
-        response = success_response(createdContact)
-
-        return jsonify(response), 201
-
-    abort(400)
+    return jsonify(response), 201
 
 
 @app.put("/contacts/<int:id>")
 def edit_contact(id):
 
-    payload = request.get_json(silent=True)
-
-    if not payload:
-        abort(400)
-
-    contact = get_contact_by_id(id)
+    contact = db.get_contact_by_id(id)
 
     if not contact:
         abort(404)
 
-    contactName = payload.get("name") if payload.get("name") else contact['name']
-    contactNumber = payload.get("number") if payload.get("number") else contact['number']
+    payload = request.get_json(silent=True)
 
-    if not update_contact(id,contactName,contactNumber):
+    validated_data = validate_data(payload, 'PUT')
+
+    contactName = validated_data.get("name") if validated_data.get("name") else contact['name']
+    contactNumber = validated_data.get("number") if validated_data.get("number") else contact['number']
+
+    if not db.update_contact(id,contactName,contactNumber):
         abort(500)
 
-    updatedContact = get_contact_by_id(id)
+    updatedContact = db.get_contact_by_id(id)
 
     response = success_response(updatedContact)
 
@@ -174,12 +167,12 @@ def edit_contact(id):
 @app.delete("/contacts/<int:id>")
 def delete_contact(id):
 
-    contact = get_contact_by_id(id)
+    contact = db.get_contact_by_id(id)
 
     if not contact:
         abort(404)
 
-    if not remove_contact(id):
+    if not db.remove_contact(id):
         abort(500)
     
     return ("", 204)

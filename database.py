@@ -64,11 +64,49 @@ def get_contacts(page,limit,arguments:list):
     
     return map_rows_to_contacts(rows)
 
-def count_contacts():
+def count_contacts(page, limit, arguments:list):
+
+    offset_rows = (page - 1) * limit
+
+    search_arg = arguments.get('search','%%')
+
+    query_params_list = [search_arg]
+
+    try:
+        arguments.remove('search')
+    except ValueError:
+        pass
+    try:
+        arguments.remove('page')
+    except ValueError:
+        pass
+    try:
+        arguments.remove('limit')
+    except ValueError:
+        pass
+    
+    where_clause = 'WHERE name LIKE ? '
+
+    for key,value in arguments:
+        where_clause += f'AND {key} = ? '
+        query_params_list.append(value)
+
+    sql_query = """
+    SELECT COUNT(*) 
+    FROM contacts
+    """ + where_clause + """
+    ORDER BY id 
+    ASC LIMIT ? 
+    OFFSET ?
+    """
+    query_params_list.append(limit)
+    query_params_list.append(offset_rows)
+
+    query_params_tuple = tuple(query_params_list)
 
     with sqlite3.connect(DATABASE_FILENAME) as conn:
         cursor = conn.cursor()
-        row = cursor.execute('SELECT COUNT(*) FROM contacts').fetchone()
+        row = cursor.execute(sql_query,query_params_tuple).fetchone()
     
     return row[0]
 

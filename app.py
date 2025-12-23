@@ -98,10 +98,10 @@ def list_contacts():
     page = request_arguments.get("page", 1)
     limit = request_arguments.get("limit", 5)
     validate_pagination_arguments(page,limit)
-    validate_arguments(request_arguments)
+    validate_arguments(request_arguments.keys())
 
-    contacts = db.get_contacts(page,limit)
-    total = db.count_contacts()
+    contacts = db.get_contacts(page,limit,request_arguments)
+    total = db.count_contacts(page,limit,request_arguments)
 
     if len(contacts) == 0:
 

@@ -70,7 +70,7 @@ def validate_arguments (arguments:list) -> None:
     for arg in arguments:
 
         try:
-            if str(arg).lower not in ACCEPTABLE_QUERY_ARGUMENTS:
+            if str(arg).lower() not in ACCEPTABLE_QUERY_ARGUMENTS:
                 raise ValidationError("Invalid query parameters")
         except TypeError: # a query parameter includes characters outside of [A-Za-z]
             raise ValidationError("Invalid query parameters")

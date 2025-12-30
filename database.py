@@ -89,7 +89,7 @@ def count_contacts(query_arguments:list):
     
     where_clause = 'WHERE name LIKE ? '
 
-    for key,value in arguments:
+    for key,value in args:
         where_clause += f'AND {key} = ? '
         query_params_list.append(value)
 

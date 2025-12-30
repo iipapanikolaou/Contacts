@@ -1,17 +1,22 @@
 import re
 
-JSON_ATTRIBUTES = ['name', 'number']
-ACCEPTABLE_QUERY_ARGUMENTS = ['page','limit','search','number']
+JSON_ATTRIBUTES = {'name', 'number'}
+ACCEPTABLE_QUERY_ARGUMENTS = {'page','limit','search','number'}
 
 class ValidationError(Exception):
     pass
 
 def validate_data(data,request_method):
+
+    data_keys = set(data.keys())
+
     if request_method == 'POST':
 
-        for attribute in JSON_ATTRIBUTES:
-            if attribute not in data:
-                raise ValidationError(f"Field:{attribute}. Error: Required field.")
+        if len(data_keys) != len(JSON_ATTRIBUTES):
+            raise ValidationError("Invalid number of fields.")
+
+        if not JSON_ATTRIBUTES.issubset(data_keys):
+            raise ValidationError("Missing required fields.")
 
         if not name_is_valid(data['name']):
             raise ValidationError(invalid_format_msg('name','[A-Za-z] and whitespace','1-100'))
@@ -21,21 +26,24 @@ def validate_data(data,request_method):
 
     elif request_method == 'PUT':
 
-        acceptable_args_in_request = [key for key in data.keys() if key in JSON_ATTRIBUTES]
-        if not acceptable_args_in_request:
+        if len(data_keys) > len(JSON_ATTRIBUTES):
+            raise ValidationError("Invalid number of fields.")
+
+        if not data_keys.issubset(JSON_ATTRIBUTES):
             raise ValidationError("Missing required fields.")
 
-        if data.get('name') is not None:
-            if not name_is_valid(data.get('name')):
-                raise ValidationError(invalid_format_msg('name','[A-Za-z] and whitespace','1-100'))
+        if not name_is_valid(data.get('name')):
+            raise ValidationError(invalid_format_msg('name','[A-Za-z] and whitespace','1-100'))
 
-        if data.get('number') is not None:
-            if not number_is_valid(data.get('number')):
-                raise ValidationError(invalid_format_msg('number','[0-9]','7-15'))
+        if not number_is_valid(data.get('number')):
+            raise ValidationError(invalid_format_msg('number','[0-9]','7-15'))
 
     return data
 
 def name_is_valid(name):
+
+    if name is None:
+        return False
 
     if len(name) < 1 or len(name) > 100:
         return False
@@ -43,6 +51,9 @@ def name_is_valid(name):
     return bool(re.match(r'^[A-Za-z\s]+$', name.strip()))
 
 def number_is_valid(number):
+
+    if number is None:
+        return False
 
     if len(number) < 7 or len(number) > 15:
         return False

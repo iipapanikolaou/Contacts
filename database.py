@@ -52,7 +52,7 @@ def get_contacts(page:int,limit:int,arguments:list):
 
     return contacts
 
-def count_contacts(arguments:list):
+def count_contacts(arguments:dict):
 
     placeholder_values = []
 
@@ -97,9 +97,11 @@ def update_contact(contact_id, name, number):
         cursor = conn.cursor()
         cursor.execute('UPDATE contacts SET name = ?, number = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',(name, number, contact_id,))
         conn.commit()
-    
-    return cursor.rowcount > 0
-    
+
+    contact_updated = cursor.rowcount > 0
+
+    return contact_updated
+
 def remove_contact(contact_id):
 
     with sqlite3.connect(DATABASE_FILENAME) as conn:
@@ -107,9 +109,9 @@ def remove_contact(contact_id):
         cursor.execute('UPDATE contacts SET updated_at = CURRENT_TIMESTAMP, deleted_at = CURRENT_TIMESTAMP WHERE id = ?',(contact_id,))
         conn.commit()
 
-    affected_rows = cursor.rowcount
-    
-    return affected_rows
+    contact_deleted = cursor.rowcount > 0
+
+    return contact_deleted
 
 def map_values_to_contact(row):
 
@@ -137,9 +139,9 @@ def map_rows_to_contacts(rows):
 
     return contacts
 
-def create_where_clause(arguments:list, placeholder_values:list) -> tuple[str,list]:
+def create_where_clause(arguments:dict, placeholder_values:list) -> str:
     args = {
-        key:value for key,value in arguments.items()
+        key:value for key,value in arguments
         if key not in ['page','limit']
     }
 

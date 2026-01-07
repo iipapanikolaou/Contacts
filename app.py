@@ -6,7 +6,7 @@
 
 from flask import Flask, request, jsonify, abort
 import database as db
-from validation import validate_data, ValidationError,validate_pagination_arguments,validate_arguments
+from validation import validate_data, ValidationError,validate_pagination_arguments,validate_query_keys
 
 app = Flask(__name__)
 
@@ -92,7 +92,7 @@ def list_contacts():
     page = request_arguments.get("page", 1)
     limit = request_arguments.get("limit", 5)
     validate_pagination_arguments(page,limit)
-    validate_arguments(request_arguments.keys())
+    validate_query_keys(request_arguments.keys())
     page = int(page)
     limit = int(limit)
 

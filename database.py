@@ -21,7 +21,7 @@ def init_db():
         """)
         conn.commit()
 
-def get_contacts(page:int,limit:int,arguments:list):
+def get_contacts(page:int,limit:int,arguments:dict):
 
     placeholder_values = []
 
@@ -141,7 +141,7 @@ def map_rows_to_contacts(rows):
 
 def create_where_clause(arguments:dict, placeholder_values:list) -> str:
     args = {
-        key:value for key,value in arguments
+        key:value for key,value in arguments.items()
         if key not in ['page','limit']
     }
 

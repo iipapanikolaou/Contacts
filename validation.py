@@ -80,7 +80,7 @@ def validate_pagination_arguments(page,limit) -> None:
     
     return
 
-def validate_arguments (arguments:list) -> None:
+def validate_query_keys(arguments:dict) -> None:
 
     if not set(arguments).issubset(ACCEPTABLE_QUERY_ARGUMENTS):
         raise ValidationError("Request includes one or more unknown arguments.")

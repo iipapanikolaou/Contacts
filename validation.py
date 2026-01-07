@@ -6,16 +6,19 @@ ACCEPTABLE_QUERY_ARGUMENTS = {'page','limit','search','number'}
 class ValidationError(Exception):
     pass
 
-def validate_data(data,request_method):
+def validate_data(data: dict | None, request_method: str) -> dict:
 
-    data_keys = set(data.keys())
+    if data is None or len(data) == 0:
+        raise ValidationError("Invalid JSON payload.")
+    
+    data_fields = set(data.keys())
 
     if request_method == 'POST':
 
-        if len(data_keys) != len(PAYLOAD_FIELDS):
+        if len(data_fields) != len(PAYLOAD_FIELDS):
             raise ValidationError("Invalid number of fields.")
 
-        if not PAYLOAD_FIELDS.issubset(data_keys):
+        if not PAYLOAD_FIELDS.issubset(data_fields):
             raise ValidationError("Missing required fields.")
 
         if not name_is_valid(data['name']):
@@ -26,17 +29,18 @@ def validate_data(data,request_method):
 
     elif request_method == 'PUT':
 
-        if len(data_keys) > len(PAYLOAD_FIELDS):
+        if len(data_fields) > len(PAYLOAD_FIELDS):
             raise ValidationError("Invalid number of fields.")
 
-        if not data_keys.issubset(PAYLOAD_FIELDS):
+        if not data_fields.issubset(PAYLOAD_FIELDS):
             raise ValidationError("Missing required fields.")
-
-        if not name_is_valid(data.get('name')):
-            raise ValidationError(invalid_format_msg('name','[A-Za-z] and whitespace','1-100'))
-
-        if not number_is_valid(data.get('number')):
-            raise ValidationError(invalid_format_msg('number','[0-9]','7-15'))
+        
+        if 'name' in data:
+            if not name_is_valid(data['name']):
+                raise ValidationError(invalid_format_msg('name','[A-Za-z] and whitespace','1-100'))
+        if 'number' in data:
+            if not number_is_valid(data['number']):
+                raise ValidationError(invalid_format_msg('number','[0-9]','7-15'))
 
     return data
 

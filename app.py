@@ -125,7 +125,7 @@ def list_contact(id):
 def add_contact():
     payload = request.get_json(silent=True)
 
-    validated_data = validate_data(payload, 'POST')
+    validated_data = validate_data(data=payload, request_method='POST')
 
     createdContactId = db.create_contact(validated_data['name'], validated_data['number'])
 
@@ -148,13 +148,12 @@ def edit_contact(id):
         abort(404)
 
     payload = request.get_json(silent=True)
-
-    validated_data = validate_data(data = payload, method = 'PUT')
+    validated_data = validate_data(data = payload, request_method='PUT')
 
     contactName = validated_data.get("name") if validated_data.get("name") else contact['name']
     contactNumber = validated_data.get("number") if validated_data.get("number") else contact['number']
 
-    if not db.update_contact(id = id, name = contactName, number = contactNumber):
+    if not db.update_contact(contact_id=id, name=contactName, number=contactNumber):
         abort(500)
 
     updatedContact = db.get_contact_by_id(id)

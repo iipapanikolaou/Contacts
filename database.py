@@ -19,15 +19,16 @@ def init_db():
 
 def get_contacts(page,limit,arguments):
 
+    args = arguments.copy()
+
     offset_rows = (page - 1) * limit
 
-    search_arg = arguments.get('search','%%')
+    name = f'%{args.get("search","")}%'
 
     where_clause = 'WHERE name LIKE ? '
 
-    query_placeholder_values = [search_arg]
+    query_placeholder_values = [name]
 
-    args = arguments.copy()
     try:
         del args['search']
     except KeyError:
@@ -76,7 +77,7 @@ def count_contacts(query_arguments:list):
 
     where_clause = 'WHERE name LIKE ? '
 
-    name = args.get('search','%%')
+    name = f'%{args.get("search","")}%'
 
     placeholder_values = [name]
 

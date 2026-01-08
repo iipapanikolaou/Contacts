@@ -19,6 +19,11 @@ def init_db():
                 deleted_at DEFAULT NULL
             );
         """)
+        cursor.execute("""
+            CREATE INDEX idx_contacts_active_order
+            ON contacts (deleted_at,id);
+        """)
+
         conn.commit()
 
 def get_contacts(page:int,limit:int,arguments:dict):

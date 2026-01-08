@@ -3,7 +3,11 @@ import sqlite3
 DATABASE_FILENAME = 'contacts.db'
 
 FILTERS = {'search': 'name LIKE ?',
-           'number': 'number = ?'}
+           'number': 'number = ?',
+           'cursor': 'id > ?'}
+
+PAGINATION_DEFAULTS = {'page': 1,
+                       'limit' : 5}
 
 def init_db():
 
@@ -26,25 +30,40 @@ def init_db():
 
         conn.commit()
 
-def get_contacts(page:int,limit:int,arguments:dict):
+def get_contacts(page:int|None,limit:int|None,cursor:int|None,arguments:dict):
 
     placeholder_values = []
 
     where_clause = create_where_clause(arguments,placeholder_values)
 
-    sql_query = """
-    SELECT id, name, number 
-    FROM contacts
-    """ + where_clause + """
-    ORDER BY id ASC
-    LIMIT ?
-    OFFSET ?
-    """
+    if cursor is None:        
 
-    offset_rows = (page - 1) * limit
+        page = PAGINATION_DEFAULTS['page'] if page is None else page
+        offset_rows = (page - 1) * limit
 
-    placeholder_values.append(limit)
-    placeholder_values.append(offset_rows)
+        sql_query = """
+        SELECT id, name, number 
+        FROM contacts
+        """ + where_clause + """
+        ORDER BY id ASC
+        LIMIT ?
+        OFFSET ?
+        """
+
+        placeholder_values.append(limit)
+        placeholder_values.append(offset_rows)
+    else :
+        
+        sql_query = """
+        SELECT id, name, number 
+        FROM contacts
+        """ + where_clause + """
+        ORDER BY id ASC
+        LIMIT ?
+        """
+
+        placeholder_values.append(limit)
+    
 
     placeholder_values_tuple = tuple(placeholder_values)
 
@@ -59,25 +78,41 @@ def get_contacts(page:int,limit:int,arguments:dict):
 
 def count_contacts(arguments:dict):
 
-    placeholder_values = []
+    cursor_is_present = arguments.get('cursor') is not None
 
-    where_clause = create_where_clause(arguments,placeholder_values)
+    if not cursor_is_present: 
+        placeholder_values = []
 
-    sql_query = """
-    SELECT COUNT(*) 
-    FROM contacts 
-    """ + where_clause
+        where_clause = create_where_clause(arguments,placeholder_values)
 
-    placeholder_values_tuple = tuple(placeholder_values)
+        sql_query = """
+        SELECT COUNT(*) 
+        FROM contacts 
+        """ + where_clause
 
-    with sqlite3.connect(DATABASE_FILENAME) as conn:
-        cursor = conn.cursor()
-        row = cursor.execute(sql_query,placeholder_values_tuple).fetchone()
+        placeholder_values_tuple = tuple(placeholder_values)
 
-        total_contacts = row[0]
+        with sqlite3.connect(DATABASE_FILENAME) as conn:
+            cursor = conn.cursor()
+            row = cursor.execute(sql_query,placeholder_values_tuple).fetchone()
 
-    return total_contacts
+            total_contacts = row[0]
 
+        return total_contacts
+    
+    else:
+        sql_query = """
+        SELECT COUNT(*) 
+        FROM contacts 
+        """
+        with sqlite3.connect(DATABASE_FILENAME) as conn:
+            cursor = conn.cursor()
+            row = cursor.execute(sql_query,placeholder_values_tuple).fetchone()
+
+            total_contacts = row[0]
+
+        return total_contacts
+    
 def get_contact_by_id(contact_id):
 
     with sqlite3.connect(DATABASE_FILENAME) as conn:

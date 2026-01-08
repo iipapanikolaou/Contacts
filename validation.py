@@ -1,7 +1,7 @@
 import re
 
 PAYLOAD_FIELDS = {'name', 'number'}
-ACCEPTABLE_QUERY_ARGUMENTS = {'page','limit','search','number'}
+ACCEPTABLE_QUERY_ARGUMENTS = {'page','limit','cursor','search','number'}
 
 class ValidationError(Exception):
     pass
@@ -68,19 +68,18 @@ def invalid_format_msg(field:str,characters_group:str,length_range:str) -> str:
 
     return f'Field: {field}. Error: Invalid format. Acceptable characters: {characters_group}. Acceptable length: {length_range}.'
 
-def validate_pagination_arguments(page,limit) -> None:
-    try:
-        page = int(page)
-        limit = int(limit)
-    except ValueError:
-        raise ValidationError('Invalid pagination arguments.')
+def validate_pagination_argument(arg: str|None) ->int|None:
+
+    if arg is None:
+        return None
     
-    if page <= 0 or limit <= 0:
-        raise ValidationError('Pagination arguments should be positive integers')
+    if not bool(re.match(r'^\d+$', arg)):
+            raise ValidationError('Pagination arguments should be positive integers')
     
-    return
+    return int(arg)
 
 def validate_query_keys(arguments:dict) -> None:
 
-    if not set(arguments).issubset(ACCEPTABLE_QUERY_ARGUMENTS):
+    args = arguments.copy()
+    if not set(args).issubset(ACCEPTABLE_QUERY_ARGUMENTS):
         raise ValidationError("Request includes one or more unknown arguments.")

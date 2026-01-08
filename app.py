@@ -29,14 +29,32 @@ def success_response(data=None):
         "error": None
     }
 
-def paginated_response(items, page:int, limit:int, total:int):
-    return success_response({
-        "items": items,
-        "page": page,
-        "limit": limit,
-        "total": total
-    })
+def paginated_response(items, page, limit,cursor, total:int):
 
+    if cursor is None:
+
+        return success_response({
+            "items": items,
+            "page": page,
+            "limit": limit,
+            "total": total
+        })
+    else:
+
+        total_items = db.count_contacts({'cursor':cursor})
+        if items:
+            if total_items >= items[-1]['id'] + 1:
+                next_cursor = items[-1]['id'] + 1
+            else:
+                next_cursor=None
+        else:
+            next_cursor=None
+        
+        return success_response({
+            "items": items,
+            "next_cursor": next_cursor,
+            "limit": limit,
+        })
 
 @app.errorhandler(404)
 def resource_not_found(e):
@@ -89,22 +107,21 @@ def handle_validation_error(e):
 def list_contacts():
 
     request_arguments = request.args
-    page = request_arguments.get("page", 1)
-    limit = request_arguments.get("limit", 5)
-    validate_pagination_arguments(page,limit)
-    validate_query_keys(request_arguments.keys())
-    page = int(page)
-    limit = int(limit)
+    page = validate_pagination_arguments(request_arguments.get("page"))
+    limit = validate_pagination_arguments(request_arguments.get("limit"))
+    cursor = validate_pagination_arguments(request_arguments.get("cursor"))
 
-    contacts = db.get_contacts(page,limit,request_arguments)
+    validate_query_keys(request_arguments.keys())
+
+    contacts = db.get_contacts(page,limit,cursor,request_arguments)
     total = db.count_contacts(request_arguments)
 
     if len(contacts) == 0:
 
-        response = paginated_response([],page,limit,total)
+        response = paginated_response([],page,limit,cursor,total)
         return jsonify(response), 200
 
-    response = paginated_response(contacts,page,limit,total)
+    response = paginated_response(contacts,page,limit,cursor,total)
     return jsonify(response), 200
 
 

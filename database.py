@@ -16,7 +16,7 @@ def init_db():
                 number TEXT NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-                deleted_at DEFAULT NULL
+                deleted_at TIMESTAMP DEFAULT NULL
             );
         """)
         cursor.execute("""
